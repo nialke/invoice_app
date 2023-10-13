@@ -37,7 +37,7 @@ class CreateInvoiceHandlerTest extends TestCase
 
     public function test_handle_success(): void
     {
-        $user = $this->createMock(User::class);
+        $user = $this->activeUser();
 
         $invoice = new Invoice(
             $user, 12500
@@ -54,7 +54,7 @@ class CreateInvoiceHandlerTest extends TestCase
         $this->invoiceRepository->expects(self::once())
             ->method('flush');
 
-        $this->handler->__invoke((new CreateInvoiceCommand('test@test.pl', 12500)));
+        $this->handler->__invoke((new CreateInvoiceCommand($user->getEmail(), 12500)));
     }
 
     public function test_handle_user_not_exists(): void
@@ -70,8 +70,31 @@ class CreateInvoiceHandlerTest extends TestCase
 
     public function test_handle_invoice_invalid_amount(): void
     {
+        $user = $this->activeUser();
         $this->expectException(InvoiceException::class);
 
-        $this->handler->__invoke((new CreateInvoiceCommand('test@test.pl', -5)));
+        $this->handler->__invoke((new CreateInvoiceCommand($user->getEmail(), -5)));
+    }
+
+    public function test_handle_invoice_invalid_user(): void
+    {
+        $this->expectException(InvoiceException::class);
+        $user = $this->inactiveUser();
+
+        $this->userRepository
+            ->expects(self::once())
+            ->method('getByEmail')
+            ->willReturn($user);
+
+        $this->handler->__invoke((new CreateInvoiceCommand($user->getEmail(), 10)));
+    }
+
+    private function activeUser(): User {
+        return (new User('test@test.pl'))
+            ->setIsActive(true);
+    }
+
+    private function inactiveUser(): User {
+        return (new User('test@test.pl'));
     }
 }
