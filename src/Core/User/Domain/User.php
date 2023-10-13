@@ -41,8 +41,14 @@ class User
         return $this->email;
     }
 
-    public function getIsActive(): ?bool
+    public function isActive(): bool
     {
         return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): User
+    {
+        $this->isActive = $isActive;
+        return $this;
     }
 }
